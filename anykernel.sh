@@ -1,45 +1,48 @@
-# AnyKernel3 Ramdisk Mod Script
-# osm0sis @ xda-developers
+### AnyKernel3 Ramdisk Mod Script
+## osm0sis @ xda-developers
 
-## AnyKernel setup
-# begin properties
+### AnyKernel setup
+# global properties
 properties() { '
-kernel.string=Illusion by Akhil
-do.devicecheck=1
+Osama Kernel for M325FV E225F
+do.devicecheck=0
 do.modules=0
-do.systemless=1
+do.systemless=0
 do.cleanup=1
 do.cleanuponabort=0
-device.name1=beryllium
-device.name2=PocoF1
+device.name1=
+device.name2=
 device.name3=
 device.name4=
 device.name5=
-supported.versions=
+supported.versions=13
 supported.patchlevels=
+supported.vendorpatchlevels=
 '; } # end properties
 
-# shell variables
-block=/dev/block/bootdevice/by-name/boot;
-is_slot_device=0;
-ramdisk_compression=auto;
 
+### AnyKernel install
+## boot files attributes
+boot_attributes() {
+set_perm_recursive 0 0 755 644 $RAMDISK/*;
+set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
+} # end attributes
 
-## AnyKernel methods (DO NOT CHANGE)
-# import patching functions/variables - see for reference
+# boot shell variables
+BLOCK=/dev/block/platform/bootdevice/by-name/boot;
+IS_SLOT_DEVICE=0;
+RAMDISK_COMPRESSION=auto;
+PATCH_VBMETA_FLAG=auto;
+
+# import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh;
 
-# Display if using MIUI or a custom ROM
-is_miui="$(file_getprop /system/build.prop 'ro.miui.ui.version.code')"
-if [[ -z $is_miui ]]; then
-    ui_print "You are running a custom ROM!"
-else
-    ui_print "You are running MIUI!"
-fi
+# boot install
+dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
 
-## AnyKernel install
-dump_boot;
+# init.rc
+backup_file init.rc;
+replace_string init.rc "cpuctl cpu,timer_slack" "mount cgroup none /dev/cpuctl cpu" "mount cgroup none /dev/cpuctl cpu,timer_slack";
 
-write_boot;
-## end install
-
+write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+## end boot install
